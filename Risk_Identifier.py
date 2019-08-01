@@ -46,7 +46,7 @@ def browse_button():
     # Allow user to select a file and store the directory in global var
     # called folder_path
     global prompt
-    prompt = filedialog.askopenfilename()
+    prompt = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx *.xls"), ("CSV files", "*.csv")])
     filename.set(os.path.basename(prompt))
     if prompt is not "":
         filename.set('Selected file: '+filename.get())
@@ -59,6 +59,13 @@ def column_in_columns(column_names, text):
     return False
 
 
+def check_box(var, field):
+    if var.get() == 1:
+        field.config(state='disabled')
+    else:
+        field.config(state='normal')
+
+
 # Remove warning
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Initialize stop words
@@ -68,100 +75,170 @@ stop_words.extend(extended_stop_words)
 
 
 def run():
-    df = pd.read_excel(prompt)
-    df.columns = map(str.lower, df.columns)
-
-    # Convert the data-frame(df) to a list
-    if columnNameField.get() == "":
-        messagebox.showinfo("Error", "Please provide a column name!")
-    elif not column_in_columns(df.columns, columnNameField.get().lower()):
-        messagebox.showinfo("Error", "The column name you provided does not exist!")
+    if prompt is "":
+        messagebox.showinfo("Error", "Please select a document first!")
     else:
-        data = df[columnNameField.get().lower()].values.tolist()
+        xl = pd.ExcelFile(prompt)
+        if SheetNameField.get() == "":
+            return messagebox.showinfo("Error", "Please provide a sheet name!")
+        elif not column_in_columns(map(str.lower, xl.sheet_names), SheetNameField.get().lower()):
+            return messagebox.showinfo("Error", "The sheet name you provided does not exist!")
+        else:
+            df = pd.read_excel(prompt)
+            df.columns = map(str.lower, df.columns)
 
-        # Remove the new line character and single quotes
-        data = [re.sub(r'\s+', ' ', str(sent)) for sent in data]
-        data = [re.sub("\'", "", str(sent)) for sent in data]
+            # Convert the data-frame(df) to a list
+            if columnNameField.get() == "":
+                return messagebox.showinfo("Error", "Please provide a column name!")
+            elif not column_in_columns(df.columns, columnNameField.get().lower()):
+                return messagebox.showinfo("Error", "The column name you provided does not exist!")
+            else:
+                data = df[columnNameField.get().lower()].values.tolist()
 
-        # Convert our data to a list of words. Now, data_words is a 2D array, each index contains a list of words
-        data_words = list(sent_to_words(data))
-        # Remove the stop words
-        data_words_nostops = remove_stopwords(data_words)
+                # Remove the new line character and single quotes
+                data = [re.sub(r'\s+', ' ', str(sent)) for sent in data]
+                data = [re.sub("\'", "", str(sent)) for sent in data]
 
-        model = gensim.models.Word2Vec(
-                data_words_nostops,
-                size=300,
-                alpha=0.03,
-                window=2,
-                min_count=2,
-                min_alpha=0.0007,
-                negative=20,
-                workers=10)
-        model.train(data_words_nostops, total_examples=len(data_words_nostops), epochs=10)
+                # Convert our data to a list of words. Now, data_words is a 2D array, each index contains a list of words
+                data_words = list(sent_to_words(data))
+                # Remove the stop words
+                data_words_nostops = remove_stopwords(data_words)
 
-        risks = []
-        positive = ['injuries', 'fail', 'dangerous', 'oil', 'incident', 'struck',
-                    'hit', 'derail', 'incorrect', 'collision', 'fatal', 'leaking', 'tamper', 'emergency',
-                    'gas', 'collided', 'damage', 'risk', 'broken', 'break']
-        negative = ['goods', 'calgary', 'train', 'car', 'automobile', 'appliance', 'south', 'mileage',
-                    'crossing', 'local', 'track', 'signal', 'gate', 'bell', 'rail', 'westward']
+                model = gensim.models.Word2Vec(
+                        data_words_nostops,
+                        size=300,
+                        alpha=0.03,
+                        window=2,
+                        min_count=2,
+                        min_alpha=0.0007,
+                        negative=20,
+                        workers=10)
+                model.train(data_words_nostops, total_examples=len(data_words_nostops), epochs=10)
 
-        similar_words_size = array_length(model.wv.most_similar(positive=positive, negative=negative, topn=0))
-        text_file = open("Output.txt", "w")
+                risks = []
 
-        for i in model.wv.most_similar(positive=positive, negative=negative, topn=similar_words_size):
-            if len(i[0]) > 2:
-                # risks.append(i[0])
-                risks.append(i)
+                if pos_var.get() == 1 and neg_var.get() == 1:
+                    positive = ['injuries', 'fail', 'dangerous', 'oil', 'incident', 'struck',
+                                'hit', 'derail', 'incorrect', 'collision', 'fatal', 'leaking', 'tamper', 'emergency',
+                                'gas', 'collided', 'damage', 'risk', 'broken', 'break']
 
-        # print(risks)
+                    negative = ['goods', 'calgary', 'train', 'car', 'automobile', 'appliance', 'south', 'mileage',
+                                'crossing', 'local', 'track', 'signal', 'gate', 'bell', 'rail', 'westward']
 
-        document_number = 0
-        count = 0
-        sum = 0
+                elif pos_var.get() == 0 and neg_var.get() == 1:
+                    positive_words = positiveWordsField.get().replace(" ", "").split(",")
+                    positive = positive_words
+                    if positive[0] is '':
+                        return messagebox.showinfo("Error", "Positive/Negative words can't be empty, write something"
+                                                     " or use default values!")
 
-        highest = risks[0][1]
+                    negative = ['goods', 'calgary', 'train', 'car', 'automobile', 'appliance', 'south', 'mileage',
+                                'crossing', 'local', 'track', 'signal', 'gate', 'bell', 'rail', 'westward']
+                elif pos_var.get() == 1 and neg_var.get() == 0:
+                    negative_words = positiveWordsField.get().replace(" ", "").split(",")
+                    negative = negative_words
+                    if negative[0] is '':
+                        return messagebox.showinfo("Error", "Positive/Negative words can't be empty, write something"
+                                                     " or use default values!")
+                    positive = ['injuries', 'fail', 'dangerous', 'oil', 'incident', 'struck',
+                                'hit', 'derail', 'incorrect', 'collision', 'fatal', 'leaking', 'tamper', 'emergency',
+                                'gas', 'collided', 'damage', 'risk', 'broken', 'break']
+                else:
+                    positive_words = positiveWordsField.get().replace(" ", "").split(",")
+                    positive = positive_words
+                    negative_words = positiveWordsField.get().replace(" ", "").split(",")
+                    negative = negative_words
+                    if positive[0] is '' or negative[0] is '':
+                        return messagebox.showinfo("Error", "Positive/Negative words can't be empty, write something"
+                                                     " or use default values!")
 
-        for j in risks:
-            if j[1] > 0:
-                sum += j[1]
-                count += 1
+                similar_words_size = array_length(model.wv.most_similar(positive=positive, negative=negative, topn=0))
+                text_file = open("Output.txt", "w")
 
-        average = sum/count
+                for i in model.wv.most_similar(positive=positive, negative=negative, topn=similar_words_size):
+                    if len(i[0]) > 2:
+                        risks.append(i)
 
-        for i in data_words_nostops:
-            document_number += 1
-            for j in i:
-                if len(j) > 2:
-                    for k in risks:
-                        if k[0] not in 'train' and k[1] > highest/2 and len(k[0]) > 2 and k[0] in j:
-                            text_file.write("Document %i has the words %s\n" % (document_number, j))
-                            break
-        text_file.close()
-        # print(model.wv.most_similar(positive=positive, topn=0)[k][1])
+                # print(risks)
 
-        # print(model.wv.most_similar(positive=positive, topn=0)[0][1])
+                document_number = 0
+                count = 0
+                sum = 0
+
+                highest = risks[0][1]
+
+                for j in risks:
+                    if j[1] > 0:
+                        sum += j[1]
+                        count += 1
+
+                for i in data_words_nostops:
+                    document_number += 1
+                    for j in i:
+                        if len(j) > 2:
+                            for k in risks:
+                                if k[1] > highest/2 and len(k[0]) > 2 and k[0] in j:
+                                    text_file.write("Document %i has the words %s\n" % (document_number, j))
+                                    break
+                text_file.close()
+                messagebox.showinfo("Success!", "Risk words have been successfully tagged in a new column 'Potential Risks'")
 
 
+# Root
 root = Tk()
 root.title("Machine learning risk identifier")
 
+# File info
 filename = StringVar()
 prompt = ""
+
+# Header title
+title = Label(master=root, text="Identify risks in a document", font=("Helvetica", 22), pady=20)
+title.grid(row=0, column=0)
+
+# Browse Button
 browseBtn = Button(text="Browse", command=browse_button)
 browseLabel = Label(master=root, textvariable=filename)
-title = Label(master=root, text="Identify risks in a document", font=("Helvetica", 22), pady=20)
-title.grid(row=0, column=1)
 browseLabel.grid(row=1, column=1)
 browseBtn.grid(row=1, column=0, padx=20, pady=20)
-columnNameLabel = Label(root, text="Column Name").grid(row=3, column=0, ipadx=10)
-columnNameField = Entry(root, width=45)
-columnNameField.grid(row=3, column=1)
-positiveWordsLabel = Label(root, text="Positive words (separate by comma)").grid(row=4, column=0, ipady=20, ipadx=10)
-positiveWordsField = Entry(root, width=45)
-positiveWordsField.grid(row=4, column=1)
+
+# Run Button
 runBtn = Button(text="Run", command=run)
 runBtn.grid(row=1, column=2, padx=20, pady=10)
+
+# Sheet Number
+SheetNameLabel = Label(root, text="Sheet Name").grid(row=3, column=0, ipady=20, ipadx=10)
+SheetNameField = Entry(root, width=45)
+SheetNameField.grid(row=3, column=1)
+
+# Column Name
+columnNameLabel = Label(root, text="Column Name").grid(row=4, column=0, ipadx=10)
+columnNameField = Entry(root, width=45)
+columnNameField.grid(row=4, column=1)
+
+# Positive Words
+positiveWordsLabel = Label(root, text="Positive words separated by commas "
+                                      "(words must exits in documents)").grid(row=5, column=0, ipady=30, ipadx=10)
+positiveWordsField = Entry(root, width=45)
+positiveWordsField.grid(row=5, column=1)
+positiveWordsField.config(state='disabled')
+pos_var = IntVar()
+defaultPositiveWords = Checkbutton(root, text="Default Positive Words", variable=pos_var,
+                                   command=lambda: check_box(pos_var, positiveWordsField))
+defaultPositiveWords.grid(row=5, column=2)
+defaultPositiveWords.toggle()
+
+# Negative Words
+negativeWordsLabel = Label(root, text="Negative words separated by commas "
+                                      "(words must exits in documents)").grid(row=6, column=0, ipady=20, ipadx=10)
+negativeWordsField = Entry(root, width=45)
+negativeWordsField.grid(row=6, column=1)
+negativeWordsField.config(state='disabled')
+neg_var = IntVar()
+defaultNegativeWords = Checkbutton(root, text="Default Negative Words", variable=neg_var,
+                                   command=lambda: check_box(neg_var, negativeWordsField))
+defaultNegativeWords.grid(row=6, column=2)
+defaultNegativeWords.toggle()
 
 
 mainloop()
