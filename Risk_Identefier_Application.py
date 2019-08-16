@@ -1,8 +1,9 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QLineEdit, QProgressBar, QLabel, QFileDialog, QCheckBox, QMenuBar, QStatusBar
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QLineEdit, QProgressBar, QLabel, QFileDialog, QCheckBox, QMenuBar, QStatusBar, QTextEdit
 import re
 import pandas as pd
+from shutil import move
 import os
 import time
 from datetime import datetime
@@ -17,7 +18,12 @@ from nltk.corpus import stopwords
 
 from collections import defaultdict
 
+positiveList = ['injuries', 'fail', 'dangerous', 'oil', 'incident', 'struck',
+                'hit', 'derail', 'incorrect', 'collision', 'fatal', 'leaking', 'tamper', 'emergency',
+                'gas', 'collided', 'damage', 'risk', 'broken', 'break']
 
+negativeList = ['train', 'westward', 'goods', 'however', 'calgary', 'car', 'automobile', 'appliance', 'south',
+                'mileage', 'empl', 'crossing', 'local', 'track', 'signal', 'bell','approximately', 'released', 'rail']
 TIME_LIMIT = 100
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -35,6 +41,7 @@ class Ui_MainWindow(object):
         self.progressBar.setObjectName("progressBar")
         self.progressBar.hide()
         self.progressBarLabel = QLabel(self.centralwidget)
+        self.progressBarLabel.setWordWrap(True);
         self.progressBarLabel.setGeometry(QtCore.QRect(500, 835, 300, 25))        
         font = QtGui.QFont()
         font.setPointSize(14)        
@@ -42,7 +49,7 @@ class Ui_MainWindow(object):
         self.progressBarLabel.setObjectName("progressBarLabel")
         self.progressBarLabel.setStyleSheet("color: #effeff;")
         self.hideProgNumLabel = QLabel(self.centralwidget)
-        self.hideProgNumLabel.setGeometry(QtCore.QRect(220, 835, 50, 23))
+        self.hideProgNumLabel.setGeometry(QtCore.QRect(215, 835, 50, 23))
         self.hideProgNumLabel.setObjectName("hideProgNumLabel")
         self.hideProgNumLabel.setStyleSheet("background: #707070;")
         self.browseButton = QPushButton(self.centralwidget)
@@ -96,22 +103,24 @@ class Ui_MainWindow(object):
         self.negativeCheckBox.setChecked(True)
         self.negativeCheckBox.setObjectName("negativeCheckBox")
         self.negativeCheckBox.setStyleSheet("color:#effeff")
-        self.positiveInput = QLineEdit(self.centralwidget)
-        self.positiveInput.setEnabled(False)
+        self.positiveInput = QTextEdit(self.centralwidget)
+        # self.positiveInput.setEnabled(False)
         self.positiveInput.setGeometry(QtCore.QRect(500, 510, 331, 71))
         font = QtGui.QFont()
-        font.setPointSize(12)
+        font.setPointSize(10)
         self.positiveInput.setFont(font)       
         self.positiveInput.setObjectName("positiveInput")
-        self.positiveInput.setStyleSheet("background: gray; border-radius: 10px;")        
-        self.negativeInput = QLineEdit(self.centralwidget)
-        self.negativeInput.setEnabled(False)
+        self.positiveInput.setStyleSheet("background: white; border-radius: 10px;")
+        self.positiveInput.setText(",".join(positiveList))
+        self.negativeInput = QTextEdit(self.centralwidget)
+        # self.negativeInput.setEnabled(False)
         self.negativeInput.setGeometry(QtCore.QRect(500, 630, 331, 71))
         font = QtGui.QFont()
-        font.setPointSize(12)
+        font.setPointSize(10)
         self.negativeInput.setFont(font)
         self.negativeInput.setObjectName("negativeInput")
-        self.negativeInput.setStyleSheet("background: gray; border-radius: 10px")        
+        self.negativeInput.setStyleSheet("background: white; border-radius: 10px")
+        self.negativeInput.setText(",".join(negativeList))      
         self.sheetInput = QLineEdit(self.centralwidget)
         self.sheetInput.setGeometry(QtCore.QRect(30, 580, 171, 31))
         font = QtGui.QFont()
@@ -200,6 +209,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.msg = QtWidgets.QMessageBox()
         self.Actionlistenr()
+        self.oldFileName = 'empty'
 
         thread = QtCore.QThread(self)
         thread.start()
@@ -212,8 +222,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.positiveCheckBox.stateChanged.connect(self.checkBoxAction)
         self.negativeCheckBox.stateChanged.connect(self.checkBoxAction)       
         self.runButton.clicked.connect(self.onButtonClick)
-        self.positiveInput.returnPressed.connect(self.onButtonClick)
-        self.negativeInput.returnPressed.connect(self.onButtonClick)
+        # self.positiveInput.returnPressed.connect(self.onButtonClick)
+        # self.negativeInput.returnPressed.connect(self.onButtonClick)
         self.sheetInput.returnPressed.connect(self.onButtonClick)
         self.columnInput.returnPressed.connect(self.onButtonClick)
 
@@ -221,8 +231,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if not self.alreadyPressed:
             self.fileName, _ = QFileDialog.getOpenFileName(self.centralwidget,"QFileDialog.getOpenFileName()", "","Excel(*.xls *.xlsx)")
             url = QtCore.QUrl.fromLocalFile(self.fileName)
-            if self.fileName:
+            
+            if self.fileName != '':
                 self.selectedFileLabel.setText("Selected File: "+url.fileName().lower())
+                self.oldFileName = self.fileName
+            else:
+                print('here')
+                self.fileName = self.oldFileName
+                print(self.fileName)
         else:
             self.msg.setIcon(QMessageBox.Critical)
             self.msg.setText("Application is already running!")
@@ -232,18 +248,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def checkBoxAction(self):
         if self.negativeCheckBox.isChecked():
-            self.negativeInput.setEnabled(False)   
-            self.negativeInput.setStyleSheet("background: gray; border-radius: 10px;")
+            # self.negativeInput.setEnabled(False)   
+            # self.negativeInput.setStyleSheet("background: gray; border-radius: 10px;")
+            self.negativeInput.setText(",".join(negativeList))
         else:
-            self.negativeInput.setEnabled(True)
-            self.negativeInput.setStyleSheet("background: white; border-radius: 10px;")
+            # self.negativeInput.setEnabled(True)
+            # self.negativeInput.setStyleSheet("background: white; border-radius: 10px;")
+            self.negativeInput.setText("")
 
         if self.positiveCheckBox.isChecked():
-            self.positiveInput.setEnabled(False)  
-            self.positiveInput.setStyleSheet("background: gray; border-radius: 10px;")
+            # self.positiveInput.setEnabled(False)  
+            # self.positiveInput.setStyleSheet("background: gray; border-radius: 10px;")
+            self.positiveInput.setText(",".join(positiveList))
         else:
-            self.positiveInput.setEnabled(True)
-            self.positiveInput.setStyleSheet("background: white; border-radius: 10px;")
+            # self.positiveInput.setEnabled(True)
+            # self.positiveInput.setStyleSheet("background: white; border-radius: 10px;")
+            self.positiveInput.setText("")
 
 
     def array_length(self, array):
@@ -315,15 +335,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         return self.msg.exec()
                     else:    
                         if self.positiveCheckBox.isChecked() and self.negativeCheckBox.isChecked():
-                            positive = ['injuries', 'fail', 'dangerous', 'oil', 'incident', 'struck',
-                                        'hit', 'derail', 'incorrect', 'collision', 'fatal', 'leaking', 'tamper', 'emergency',
-                                        'gas', 'collided', 'damage', 'risk', 'broken', 'break']
+                            positive = positiveList
 
-                            negative = ['train', 'westward', 'goods', 'calgary', 'car', 'automobile', 'appliance', 'south',
-                                        'mileage', 'empl', 'crossing', 'local', 'track', 'signal', 'approximately', 'released', 'rail']
+                            negative = negativeList
 
                         elif not self.positiveCheckBox.isChecked() and self.negativeCheckBox.isChecked():
-                            positive_words = self.positiveInput.text().replace(" ", "").split(",")
+                            positive_words = self.positiveInput.toPlainText().replace(" ", "").split(",")
                             positive = positive_words
                             if positive[0] is '':
                                 self.msg.setIcon(QMessageBox.Critical)
@@ -332,11 +349,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                                 return self.msg.exec()
                                 # return print('error')
 
-                            negative = ['train', 'westward', 'goods', 'calgary', 'car', 'automobile', 'appliance', 'south',
-                                        'mileage', 'empl', 'crossing', 'local', 'track', 'signal', 'approximately', 'released', 'rail']
+                            negative = negativeList
 
                         elif self.positiveCheckBox.isChecked() and not self.negativeCheckBox.isChecked():
-                            negative_words = self.negativeInput.text().replace(" ", "").split(",")
+                            negative_words = self.negativeInput.toPlainText().replace(" ", "").split(",")
                             negative = negative_words
                             if negative[0] is '':
                                 self.msg.setIcon(QMessageBox.Critical)
@@ -344,13 +360,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                                 self.msg.setWindowTitle("Error")
                                 return self.msg.exec()
                                 # return print('error')
-                            positive = ['injuries', 'fail', 'dangerous', 'oil', 'incident', 'struck',
-                                        'hit', 'derail', 'incorrect', 'collision', 'fatal', 'leaking', 'tamper', 'emergency',
-                                        'gas', 'collided', 'damage', 'risk', 'broken', 'break']
+                            positive = positiveList
                         else:
-                            positive_words = self.positiveInput.text().replace(" ", "").split(",")
+                            positive_words = self.positiveInput.toPlainText().replace(" ", "").split(",")
                             positive = positive_words
-                            negative_words = self.negativeInput.text().replace(" ", "").split(",")
+                            negative_words = self.negativeInput.toPlainText().replace(" ", "").split(",")
                             negative = negative_words
                             if positive[0] is '' or negative[0] is '':
                                 self.msg.setIcon(QMessageBox.Critical)
@@ -358,14 +372,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                                 self.msg.setWindowTitle("Error")
                                 return self.msg.exec() 
                                 # return print('error')
-                        wrapper = partial(self.m_worker.task, self.fileName, self.columnInput, self.sent_to_words, self.remove_stopwords, self.array_length, df, positive, negative, self.progressBarLabel, self.progressBar, self.hideProgNumLabel)
+
+                        self.runButton.setGeometry(QtCore.QRect(282, 735, 561, 81))
+                        self.progressBarLabel.setGeometry(QtCore.QRect(500, 835, 300, 25))        
+                        font = QtGui.QFont()
+                        font.setPointSize(14)        
+                        self.progressBarLabel.setFont(font)
+                        self.hideProgNumLabel.show()
+
+                        wrapper = partial(self.m_worker.task, self.fileName, self.columnInput, self.sent_to_words, self.remove_stopwords, self.array_length, df, positive, negative, self.progressBarLabel, self.progressBar, self.hideProgNumLabel, self.runButton)
                         QtCore.QTimer.singleShot(0, wrapper)
                         self.progressBar.show()  
                         self.progressBarLabel.setText("Training Model...")                  
                         self.calc = External()        
                         self.calc.countChanged.connect(self.onCountChanged)
                         self.calc.start()
-                        self.alreadyPressed = True
+                        
                         # if wrapper.finished:                        
                         #     self.msg.setIcon(QMessageBox.Information)
                         #     self.msg.setText("Risk words have been successfully tagged. A new excel file named \""+os.path.splitext(os.path.basename(self.fileName))[0]+"RisksIdentified \""+" is generated to \""+os.path.dirname(os.path.realpath(__file__))+"\" with a new column 'Potential Risks'")
@@ -386,11 +408,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 class Worker(QtCore.QObject):
     
     @QtCore.pyqtSlot(str)
-    def task(self, fileName, columnInput, sent_to_words, remove_stopwords, array_length, df, positive, negative, progressBarLabel, progressBar, hideProgNumLabel):        
+    def task(self, fileName, columnInput, sent_to_words, remove_stopwords, array_length, df, positive, negative, progressBarLabel, progressBar, hideProgNumLabel, runButton):        
 
         # Initialize start time to run script
-        start_time = datetime.now()
-        
+        start_time = datetime.now()        
+
+        self.alreadyPressed = True
         data = df[columnInput.text().lower()].values.tolist()
 
         # Remove the new line character and single quotes
@@ -430,6 +453,7 @@ class Worker(QtCore.QObject):
 
         highest = risks[0][1]
 
+        progressBarLabel.setGeometry(QtCore.QRect(450, 835, 300, 25))
         progressBarLabel.setText("Tagging documents with risks...")
         risksWithDuplicates = defaultdict(list)
         for document_number, i in enumerate(data_words_nostops):
@@ -439,10 +463,11 @@ class Worker(QtCore.QObject):
                         if k[1] > highest/2 and k[0] in j and k[0][:3] == j[:3]:              
                             risksWithDuplicates[document_number].append(j)                          
                             # text_file.write("Document %i has the words %s from %s\n" % (document_number+1, j, k))
-                            break
+                            break     
 
         risksWithDuplicates = dict(risksWithDuplicates)
 
+        progressBarLabel.setGeometry(QtCore.QRect(500, 835, 300, 25))
         progressBarLabel.setText("Removing duplicates...")
         for key,value in risksWithDuplicates.items():
             newValue = list(dict.fromkeys(risksWithDuplicates[key]))
@@ -461,25 +486,26 @@ class Worker(QtCore.QObject):
         cols.pop(cols.index('Potential Risks'))
         df = df[cols+[columnInput.text(), 'Potential Risks']]
 
-
         df.to_excel(name+"RisksIdentified"+extension.lower())
         # text_file.close()                   
-        
+        move(os.path.dirname(os.path.realpath(__file__))+"\\\\"+name+"RisksIdentified"+extension, os.path.dirname(os.path.realpath(__file__))+"\\\\"+"files generated"+"\\\\"+name+"RisksIdentified"+extension)
         # msg.setIcon(QMessageBox.Information)
         # msg.setText("Risk words have been successfully tagged. A new excel file named \""+name+"RisksIdentified \""+" is generated to \""+os.path.dirname(os.path.realpath(__file__))+"\" with a new column 'Potential Risks'")
         # msg.setWindowTitle("Success!")              
         progressBar.hide()
         # progressBarLabel
-        progressBarLabel.setGeometry(QtCore.QRect(20, 835, 1200, 25))
+        progressBarLabel.setGeometry(QtCore.QRect(375, 815, 400, 60))
         hideProgNumLabel.hide()
         font = QtGui.QFont()
         font.setPointSize(10)
-        progressBarLabel.setText("Risk words have been successfully tagged. A new excel file named \""+name+"RisksIdentified \""+" is generated to \""+os.path.dirname(os.path.realpath(__file__))+"\" with a new column 'Potential Risks'")
+        runButton.setGeometry(QtCore.QRect(282, 720, 561, 81))
+        progressBarLabel.setText("Risk words have been successfully tagged. A new excel file named \""+name+"RisksIdentified \""+" is generated to \""+os.path.dirname(os.path.realpath(__file__))+"/files generated/"+base+"\" with a new column 'Potential Risks'")
         progressBarLabel.setFont(font)
         # Print time to run script
         print("Time taken to run script: ", datetime.now() - start_time)
         # finished = True
         # return msg.exec()
+        self.alreadyPressed = False;
 
 class External(QThread):
     """
