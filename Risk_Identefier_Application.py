@@ -10,7 +10,7 @@ from collections import defaultdict
 # PyQt5
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QLineEdit, QProgressBar, QLabel, QFileDialog, QCheckBox, QMenuBar, QStatusBar, QTextEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QLineEdit, QProgressBar, QLabel, QFileDialog, QCheckBox, QMenuBar, QStatusBar, QTextEdit, QRadioButton
 
 # Gensim
 import gensim
@@ -56,8 +56,20 @@ class Ui_MainWindow(object):
         self.hideProgNumLabel.setGeometry(QtCore.QRect(215, 835, 50, 23))
         self.hideProgNumLabel.setObjectName("hideProgNumLabel")
         self.hideProgNumLabel.setStyleSheet("background: #707070;")
+        self.radioButtonML = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButtonML.setGeometry(QtCore.QRect(30, 640, 171, 23))
+        self.radioButtonML.setObjectName("radioButtonML")
+        self.radioButtonML.setFont(font)
+        self.radioButtonML.setStyleSheet("color: white")
+        self.radioButtonML.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.radioButtonML.setChecked(True)
+        self.radioButtonSearch = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButtonSearch.setGeometry(QtCore.QRect(30, 700, 171, 23))
+        self.radioButtonSearch.setObjectName("radioButtonSearch")
+        self.radioButtonSearch.setFont(font)
+        self.radioButtonSearch.setStyleSheet("color: white")
+        self.radioButtonSearch.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.browseButton = QPushButton(self.centralwidget)
-        self.browseButton.setEnabled(True)
         self.browseButton.setGeometry(QtCore.QRect(30, 460, 171, 41))
         font = QtGui.QFont()
         font.setPointSize(14)
@@ -66,6 +78,7 @@ class Ui_MainWindow(object):
         self.browseButton.setFlat(False)
         self.browseButton.setObjectName("browseButton")
         self.browseButton.setStyleSheet("QPushButton{background: #914ed4; border-radius: 10px; color: #effeff; border: 3px outset black;} QPushButton:hover{background : #4838e8; border: 3px outset white;};")
+        self.browseButton.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.titlePicture = QLabel(self.centralwidget)
         self.titlePicture.setGeometry(QtCore.QRect(0, 0, 1154, 347))
         self.titlePicture.setText("")
@@ -89,6 +102,7 @@ class Ui_MainWindow(object):
         self.runButton.setObjectName("runButton")
         self.runButton.setStyleSheet("QPushButton{background: #914ed4; border-radius: 10px; color: #effeff; border: 3px outset black;} QPushButton:hover{background : #4838e8; border: 3px outset white;};")
         self.runButton.setDefault(True)
+        self.runButton.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.positiveCheckBox = QCheckBox(self.centralwidget)
         self.positiveCheckBox.setGeometry(QtCore.QRect(860, 530, 191, 20))
         font = QtGui.QFont()
@@ -97,8 +111,9 @@ class Ui_MainWindow(object):
         self.positiveCheckBox.setChecked(True)
         self.positiveCheckBox.setObjectName("positiveCheckBox")
         self.positiveCheckBox.setStyleSheet("QCheckBox{color:#effeff}")
+        self.positiveCheckBox.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.negativeCheckBox = QCheckBox(self.centralwidget)
-        self.negativeCheckBox.setEnabled(True)
+        self.negativeCheckBox.setChecked(True)
         self.negativeCheckBox.setGeometry(QtCore.QRect(860, 650, 191, 20))
         font = QtGui.QFont()
         font.setPointSize(12)
@@ -107,6 +122,7 @@ class Ui_MainWindow(object):
         self.negativeCheckBox.setChecked(True)
         self.negativeCheckBox.setObjectName("negativeCheckBox")
         self.negativeCheckBox.setStyleSheet("color:#effeff")
+        self.negativeCheckBox.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.positiveInput = QTextEdit(self.centralwidget)
         self.positiveInput.setGeometry(QtCore.QRect(500, 510, 331, 71))
         font = QtGui.QFont()
@@ -174,6 +190,23 @@ class Ui_MainWindow(object):
         self.selectedFileLabel.setText("")
         self.selectedFileLabel.setObjectName("selectedFileLabel")
         self.selectedFileLabel.setStyleSheet("color: #effeff;")
+        self.searchInput = QTextEdit(self.centralwidget)
+        self.searchInput.setGeometry(QtCore.QRect(500, 580, 601, 100))
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.searchInput.setFont(font)
+        self.searchInput.setObjectName("sheetInput")
+        self.searchInput.setStyleSheet("background: white; border-radius: 10px")
+        self.searchInputLabel = QLabel(self.centralwidget)
+        self.searchInputLabel.setGeometry(QtCore.QRect(500, 550, 611, 21))  
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        self.searchInputLabel.setFont(font)
+        self.searchInputLabel.setObjectName("searchInputLabel")
+        self.searchInputLabel.setStyleSheet("color: #effeff;")
+        self.searchInput.hide()
+        self.searchInputLabel.hide()
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1125, 21))
@@ -194,6 +227,8 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Risks Identifier"))
         self.browseButton.setText(_translate("MainWindow", "Browse For File"))
+        self.radioButtonML.setText(_translate("MainWindow", "Machine Learning"))
+        self.radioButtonSearch.setText(_translate("MainWindow", "Normal Search"))
         self.title.setText(_translate("MainWindow", "Risks Identifier"))
         self.runButton.setText(_translate("MainWindow", "Run Tool"))
         self.positiveCheckBox.setText(_translate("MainWindow", "Default Positive Words"))
@@ -203,7 +238,7 @@ class Ui_MainWindow(object):
         self.progressBarLabel.setText(_translate("MainWindow", ""))
         self.positiveWordsLabel.setText(_translate("MainWindow", "Positive words separated by commas (words must exist in documents):"))
         self.negativeWordsLabel.setText(_translate("MainWindow", "Negative words separated by commas (words must exist in documents):"))
-
+        self.searchInputLabel.setText(_translate("MainWindow", "Words to search for seperated by commas:"))
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -217,7 +252,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         thread.start()
         self.m_worker = Worker()
         self.m_worker.moveToThread(thread)
-        self.alreadyPressed = False
+        self.alreadyPressed = [False]
 
 
     def Actionlistenr(self):
@@ -227,10 +262,34 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.runButton.clicked.connect(self.onButtonClick)
         self.sheetInput.returnPressed.connect(self.onButtonClick)
         self.columnInput.returnPressed.connect(self.onButtonClick)
+        self.radioButtonML.toggled.connect(self.radioButtonAction)
+        self.radioButtonSearch.toggled.connect(self.radioButtonAction)
+
+
+    def radioButtonAction(self):
+        if self.radioButtonML.isChecked():
+            self.searchInput.hide()
+            self.searchInputLabel.hide()
+            self.positiveInput.show()
+            self.positiveCheckBox.show()
+            self.positiveWordsLabel.show()
+            self.negativeInput.show()
+            self.negativeCheckBox.show()
+            self.negativeWordsLabel.show()
+        else:
+            self.searchInput.show()
+            self.searchInputLabel.show()
+            self.positiveInput.hide()
+            self.positiveCheckBox.hide()
+            self.positiveWordsLabel.hide()
+            self.negativeInput.hide()
+            self.negativeCheckBox.hide()
+            self.negativeWordsLabel.hide()
+            
 
 
     def browseAction(self):
-        if not self.alreadyPressed:
+        if not self.alreadyPressed[0]:
             self.fileName, _ = QFileDialog.getOpenFileName(self.centralwidget,"QFileDialog.getOpenFileName()", "","Excel(*.xls *.xlsx)")
             url = QtCore.QUrl.fromLocalFile(self.fileName)
             
@@ -283,7 +342,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         return [[word for word in simple_preprocess(str(doc)) if word not in self.stop_words] for doc in texts]
 
     def request_information(self):
-        if self.alreadyPressed:
+        if self.alreadyPressed[0]:
             self.msg.setIcon(QMessageBox.Critical)
             self.msg.setText("Application is already running!")
             self.msg.setWindowTitle("Error")
@@ -319,43 +378,54 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.msg.setText("The column name you provided does not exist!")
                         self.msg.setWindowTitle("Error")
                         return self.msg.exec()
-                    else:    
-                        if self.positiveCheckBox.isChecked() and self.negativeCheckBox.isChecked():
-                            positive = positiveList
+                    else:
+                        if self.radioButtonML.isChecked():   
+                            if self.positiveCheckBox.isChecked() and self.negativeCheckBox.isChecked():
+                                positive = positiveList
 
-                            negative = negativeList
+                                negative = negativeList
 
-                        elif not self.positiveCheckBox.isChecked() and self.negativeCheckBox.isChecked():
-                            positive_words = self.positiveInput.toPlainText().replace(" ", "").split(",")
-                            positive = positive_words
-                            if positive[0] is '':
-                                self.msg.setIcon(QMessageBox.Critical)
-                                self.msg.setText("Positive/Negative words can't be empty, write something or use default values!")
-                                self.msg.setWindowTitle("Error")
-                                return self.msg.exec()
+                            elif not self.positiveCheckBox.isChecked() and self.negativeCheckBox.isChecked():
+                                positive_words = self.positiveInput.toPlainText().replace(" ", "").split(",")
+                                positive = positive_words
+                                if positive[0] is '':
+                                    self.msg.setIcon(QMessageBox.Critical)
+                                    self.msg.setText("Positive/Negative words can't be empty, write something or use default values!")
+                                    self.msg.setWindowTitle("Error")
+                                    return self.msg.exec()
 
-                            negative = negativeList
+                                negative = negativeList
 
-                        elif self.positiveCheckBox.isChecked() and not self.negativeCheckBox.isChecked():
-                            negative_words = self.negativeInput.toPlainText().replace(" ", "").split(",")
-                            negative = negative_words
-                            if negative[0] is '':
-                                self.msg.setIcon(QMessageBox.Critical)
-                                self.msg.setText("Positive/Negative words can't be empty, write something or use default values!")
-                                self.msg.setWindowTitle("Error")
-                                return self.msg.exec()
-                            positive = positiveList
+                            elif self.positiveCheckBox.isChecked() and not self.negativeCheckBox.isChecked():
+                                negative_words = self.negativeInput.toPlainText().replace(" ", "").split(",")
+                                negative = negative_words
+                                if negative[0] is '':
+                                    self.msg.setIcon(QMessageBox.Critical)
+                                    self.msg.setText("Positive/Negative words can't be empty, write something or use default values!")
+                                    self.msg.setWindowTitle("Error")
+                                    return self.msg.exec()
+                                positive = positiveList
+                            else:
+                                positive_words = self.positiveInput.toPlainText().replace(" ", "").split(",")
+                                positive = positive_words
+                                negative_words = self.negativeInput.toPlainText().replace(" ", "").split(",")
+                                negative = negative_words
+                                if positive[0] is '' or negative[0] is '':
+                                    self.msg.setIcon(QMessageBox.Critical)
+                                    self.msg.setText("Positive/Negative words can't be empty, write something or use default values!")
+                                    self.msg.setWindowTitle("Error")
+                                    return self.msg.exec() 
+                            wrapper = partial(self.m_worker.taskML, self.fileName, self.columnInput, self.sent_to_words, self.remove_stopwords, self.array_length, df, positive, negative, self.progressBarLabel, self.progressBar, self.hideProgNumLabel, self.runButton, self.alreadyPressed)
+
                         else:
-                            positive_words = self.positiveInput.toPlainText().replace(" ", "").split(",")
-                            positive = positive_words
-                            negative_words = self.negativeInput.toPlainText().replace(" ", "").split(",")
-                            negative = negative_words
-                            if positive[0] is '' or negative[0] is '':
+                            if self.searchInput.toPlainText() == "":
                                 self.msg.setIcon(QMessageBox.Critical)
-                                self.msg.setText("Positive/Negative words can't be empty, write something or use default values!")
+                                self.msg.setText("Search words field cannot be empty!")
                                 self.msg.setWindowTitle("Error")
-                                return self.msg.exec() 
-
+                                return self.msg.exec()
+                            else:                                       
+                                wrapper = partial(self.m_worker.taskSearch, self.fileName, self.columnInput, self.sent_to_words, self.array_length, df, self.progressBarLabel, self.progressBar, self.hideProgNumLabel, self.runButton, self.searchInput, self.alreadyPressed, self.calc)
+                        
                         self.runButton.setGeometry(QtCore.QRect(282, 735, 561, 81))
                         self.progressBarLabel.setGeometry(QtCore.QRect(500, 835, 300, 25))        
                         font = QtGui.QFont()
@@ -363,13 +433,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.progressBarLabel.setFont(font)
                         self.hideProgNumLabel.show()
 
-                        wrapper = partial(self.m_worker.task, self.fileName, self.columnInput, self.sent_to_words, self.remove_stopwords, self.array_length, df, positive, negative, self.progressBarLabel, self.progressBar, self.hideProgNumLabel, self.runButton)
                         QtCore.QTimer.singleShot(0, wrapper)
-                        self.progressBar.show()  
-                        self.progressBarLabel.setText("Training Model...")                  
                         self.calc = External()        
                         self.calc.countChanged.connect(self.onCountChanged)
-                        self.calc.start()           
+                        self.calc.start() 
+
+                        self.progressBar.show()
+                        self.alreadyPressed[0] = True     
 
     
     @QtCore.pyqtSlot()
@@ -385,12 +455,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 class Worker(QtCore.QObject):
     
     @QtCore.pyqtSlot(str)
-    def task(self, fileName, columnInput, sent_to_words, remove_stopwords, array_length, df, positive, negative, progressBarLabel, progressBar, hideProgNumLabel, runButton):        
+    def taskML(self, fileName, columnInput, sent_to_words, remove_stopwords, array_length, df, positive, negative, progressBarLabel, progressBar, hideProgNumLabel, runButton, alreadyPressed):        
 
         # Initialize start time to run script
         start_time = datetime.now()
-
-        self.alreadyPressed = True
+        progressBarLabel.setText("Training Model...")
+        
         data = df[columnInput.text().lower()].values.tolist()
 
         # Remove the new line character and single quotes
@@ -433,15 +503,14 @@ class Worker(QtCore.QObject):
                     for k in risks:
                         if k[1] > highest/2 and k[0] in j and k[0][:3] == j[:3]:              
                             risksWithDuplicates[document_number].append(j)                   
-                            break  
-            if document_number > 200:
-                break   
+                            break
 
         risksWithDuplicates = dict(risksWithDuplicates)
 
         progressBarLabel.setGeometry(QtCore.QRect(500, 835, 300, 25))
         progressBarLabel.setText("Removing duplicates...")
         for key,value in risksWithDuplicates.items():
+            # Removing duplicates
             newValue = list(dict.fromkeys(risksWithDuplicates[key]))
             newValue = {key: newValue}
             risksWithDuplicates.update(newValue)
@@ -460,19 +529,87 @@ class Worker(QtCore.QObject):
 
         df.to_excel(name+"RisksIdentified"+extension.lower())
         move(os.path.dirname(os.path.realpath(__file__))+"\\\\"+name+"RisksIdentified"+extension, os.path.dirname(os.path.realpath(__file__))+"\\\\"+"files generated"+"\\\\"+name+"RisksIdentified"+extension)             
-        progressBar.hide()
-        progressBarLabel.setGeometry(QtCore.QRect(375, 815, 400, 60))
+        
+        progressBarLabel.setGeometry(QtCore.QRect(225, 815, 700, 70))
         hideProgNumLabel.hide()
         font = QtGui.QFont()
         font.setPointSize(10)
-        runButton.setGeometry(QtCore.QRect(282, 720, 561, 81))
-        progressBarLabel.setText("Risk words have been successfully tagged. A new excel file named \""+name+"RisksIdentified \""+" is generated to \""+os.path.dirname(os.path.realpath(__file__))+"\\files generated\\"+base+"\" with a new column 'Potential Risks'")
+        progressBarLabel.setText("Risk words have been successfully tagged. A new excel file named \""+name+"RisksIdentified\""+" is generated to \""+os.path.dirname(os.path.realpath(__file__))+"\\files generated\\"+name+"RisksIdentified"+extension.lower()+"\" with a new column 'Potential Risks'")
         progressBarLabel.setFont(font)
+        progressBar.hide()
 
         # Print time to run script
         print("Time taken to run script: ", datetime.now() - start_time)
-        self.alreadyPressed = False;
+        alreadyPressed[0] = False;
 
+    @QtCore.pyqtSlot(str)
+    def taskSearch(self, fileName, columnInput, sent_to_words, array_length, df, progressBarLabel, progressBar, hideProgNumLabel, runButton, searchInput, alreadyPressed, calc):        
+
+        # Initialize start time to run script
+        start_time = datetime.now()
+        progressBarLabel.setText("Searching for words...")
+
+        data = df[columnInput.text().lower()].values.tolist()
+
+        # Remove the new line character and single quotes
+        data = [re.sub(r'\s+', ' ', str(sent)) for sent in data]
+        data = [re.sub("\'", "", str(sent)) for sent in data]
+
+        # Convert our data to a list of words. Now, data_words is a 2D array,
+        # each index contains a list of words
+        data_words = list(sent_to_words(data))
+
+        progressBarLabel.setGeometry(QtCore.QRect(450, 835, 500, 25))
+        progressBarLabel.setText("Tagging documents with found word...")
+        wordsWithDuplicates = defaultdict(list)
+        searchForWords = searchInput.toPlainText().replace('\n', '')
+        searchForWords = searchInput.toPlainText().replace(" ", "").split(",")
+
+        for document_number, document in enumerate(data_words):
+            for word in document:
+                for search in searchForWords:
+                    # print('word: '+word)
+                    # print('search: '+search)
+                    if search == word:                        
+                        wordsWithDuplicates[document_number].append(word)
+            if document_number >50:
+                break
+
+        progressBarLabel.setGeometry(QtCore.QRect(500, 835, 300, 25))
+        progressBarLabel.setText("Removing duplicates...")
+        wordsWithDuplicates = dict(wordsWithDuplicates)
+        for key,value in wordsWithDuplicates.items():
+            # Removing duplicates
+            newValue = list(dict.fromkeys(wordsWithDuplicates[key]))
+            newValue = {key: newValue}
+            wordsWithDuplicates.update(newValue)        
+        
+        progressBarLabel.setText("Creating new file...")
+        base = os.path.basename(fileName)
+        name = os.path.splitext(base)[0]
+        extension = os.path.splitext(base)[1]               
+        df['Searched for Words'] = df.index.map(wordsWithDuplicates) # Removed duplicates
+
+        cols = list(df.columns.values) 
+        cols.pop(cols.index(columnInput.text()))
+        cols.pop(cols.index('Searched for Words'))
+        df = df[cols+[columnInput.text(), 'Searched for Words']]
+
+        df.to_excel(name+"SearchedWords"+extension.lower())
+        move(os.path.dirname(os.path.realpath(__file__))+"\\\\"+name+"SearchedWords"+extension, os.path.dirname(os.path.realpath(__file__))+"\\\\"+"files generated"+"\\\\"+name+"SearchedWords"+extension)
+
+        progressBarLabel.setGeometry(QtCore.QRect(225, 815, 700, 70))
+        hideProgNumLabel.hide()
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        progressBarLabel.setText("Searched words have been successfully tagged. A new excel file named \""+name+"SearchedWords\""+" is generated to \""+os.path.dirname(os.path.realpath(__file__))+"\\files generated\\"+name+"SearchedWords"+extension.lower()+"\" with a new column 'Searched for Words'")
+        progressBarLabel.setFont(font)
+        progressBar.hide()
+
+        # Print time to run script
+        print("Time taken to run script: ", datetime.now() - start_time)
+        alreadyPressed[0] = False;
+        calc.exit(0)
 
 class External(QThread):
     """
@@ -488,6 +625,7 @@ class External(QThread):
             self.countChanged.emit(count)
             if count >= TIME_LIMIT:
                 count=0
+        print('hi')
 
 
 
