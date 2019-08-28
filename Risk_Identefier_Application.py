@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 from functools import partial
 from collections import defaultdict
+import ctypes
 
 # PyQt5
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -38,13 +39,16 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setFixedSize(1125, 800)
         MainWindow.setAutoFillBackground(False)
+        myappid = u'Risk_Identefier' # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        self.setWindowIcon(QtGui.QIcon('logo.png'))
         self.filedialog = QFileDialog()
         self.filedialog.setFixedSize(500,500)
         self.fileName=""
         self.msg = QMessageBox()        
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        self.centralwidget.setStyleSheet("background: #707070;")
+        self.centralwidget.setStyleSheet("background: #707070;")        
         self.progressBar = QProgressBar(self.centralwidget)
         self.progressBar.setGeometry(QtCore.QRect(50, 835-103, 200, 23))
         self.progressBar.setProperty("value", 0)
@@ -90,8 +94,13 @@ class Ui_MainWindow(object):
         self.titlePicture.setText("")
         self.titlePicture.setStyleSheet("background-image: url('images/background.jpg')")
         self.titlePicture.setObjectName("titlePicture")
+        self.logoPicture = QLabel(self.centralwidget)
+        self.logoPicture.setGeometry(QtCore.QRect(925, 0, 200, 140))
+        self.logoPicture.setText("")
+        self.logoPicture.setStyleSheet("background-image: url('images/logo.png')")
+        self.logoPicture.setObjectName("logoPicture")
         self.title = QLabel(self.centralwidget)
-        self.title.setGeometry(QtCore.QRect(550, 340-183, 381, 61))
+        self.title.setGeometry(QtCore.QRect(50, 200, 381, 61))
         self.title.setStyleSheet("background: transparent; color: #effeff;")
         font = QtGui.QFont()
         font.setFamily("Times New Roman")
@@ -476,20 +485,22 @@ class Worker(QtCore.QObject):
         progressBarLabel.setGeometry(QtCore.QRect(450, 835-103, 300, 25))
         progressBarLabel.setText("Tagging documents with risks...")
         risksWithDuplicates = defaultdict(list)
-        riskCount = 0
-        riskInDocCount = 0
+        totalRiskCount = 0
+        docContainsRiskCount = 0
+        riskCountInEachDoc = defaultdict(lambda:0)
         for document_number, i in enumerate(data_words_nostops):
             riskInDocConfirm = False
+            oldRiskCount = totalRiskCount
             for j in i:
                 if len(j) > 2:
                     for k in risks:
                         if k[1] > highest/2 and k[0] in j and k[0][:3] == j[:3]:              
                             risksWithDuplicates[document_number].append(j)
-                            riskCount+=1
+                            totalRiskCount+=1
                             riskInDocConfirm = True
                             break
             if riskInDocConfirm:
-                riskInDocCount += 1
+                docContainsRiskCount += 1
 
         risksWithDuplicates = dict(risksWithDuplicates)
 
@@ -506,19 +517,31 @@ class Worker(QtCore.QObject):
         name = os.path.splitext(base)[0]
         extension = os.path.splitext(base)[1]               
         df['Potential Risks'] = df.index.map(risksWithDuplicates)
+
+        for document_number in range(len(df.index)):
+            if isinstance(df['Potential Risks'][document_number], float):
+                # print(df['Potential Risks'][document_number])
+                riskCountInEachDoc[document_number] = 0
+            else:
+                riskCountInEachDoc[document_number] = len(df['Potential Risks'][document_number])
+
+        df['Risk Count'] = df.index.map(riskCountInEachDoc)        
+        df = df.sort_values(by='Risk Count', ascending=False)
+        df = df.reset_index(drop=True)
         df['Machine Learning Statistics'] = ''
-        df['Machine Learning Statistics'][0] = 'Total risks identefied in all documents: '+str(riskCount)
-        df['Machine Learning Statistics'][1] = 'Average risk per document: '+str("{0:.2f}".format((riskCount/len(df.index))))
-        df['Machine Learning Statistics'][2] = 'Percentage of documents that had no labeled risks: '+str("{0:.2f}".format((len(df.index)-riskInDocCount)/len(df.index))*100)+"%"
+        df['Machine Learning Statistics'][0] = 'Total risks identefied in all documents: '+str(totalRiskCount)
+        df['Machine Learning Statistics'][1] = 'Average risk per document: '+str("{0:.2f}".format((totalRiskCount/len(df.index))))
+        df['Machine Learning Statistics'][2] = 'Percentage of documents that had no labeled risks: '+str("{0:.2f}".format((len(df.index)-docContainsRiskCount)/len(df.index)*100))+"%"
 
 
         cols = list(df.columns.values) 
         cols.pop(cols.index(columnInput.text()))
         cols.pop(cols.index('Potential Risks'))
+        cols.pop(cols.index('Risk Count'))
         cols.pop(cols.index('Machine Learning Statistics'))
-        df = df[cols+[columnInput.text(), 'Potential Risks', 'Machine Learning Statistics']]
+        df = df[cols+[columnInput.text(), 'Potential Risks', 'Risk Count', 'Machine Learning Statistics']]
 
-        df.to_excel(name+"RisksIdentified"+extension.lower())
+        df.to_excel(name+"RisksIdentified"+extension.lower(), index=False)
         move(os.path.dirname(os.path.realpath(__file__))+"\\\\"+name+"RisksIdentified"+extension, os.path.dirname(os.path.realpath(__file__))+"\\\\"+"files generated"+"\\\\"+name+"RisksIdentified"+extension)             
         
         progressBarLabel.setGeometry(QtCore.QRect(225, 815-103, 700, 70))
