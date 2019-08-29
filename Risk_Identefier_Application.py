@@ -28,7 +28,7 @@ positiveList = ['injuries', 'fail', 'dangerous', 'oil', 'incident', 'struck',
                 'hit', 'derail', 'incorrect', 'collision', 'fatal', 'leaking', 'tamper', 'emergency',
                 'gas', 'collided', 'damage', 'risk', 'broken']
 
-negativeList = ['train', 'westward', 'goods', 'however', 'calgary', 'car', 'automobile', 'appliance', 'south',
+negativeList = ['train', 'westward', 'goods', 'however', 'calgary', 'car', 'automobile', 'appliance', 'south', 'units', 'onto',
                 'mileage', 'empl', 'crossing', 'local', 'track', 'signal', 'bell','approximately', 'released', 'rail', 'shop']
 TIME_LIMIT = 100
 class Ui_MainWindow(object):
@@ -95,7 +95,7 @@ class Ui_MainWindow(object):
         self.titlePicture.setStyleSheet("background-image: url('images/background.jpg')")
         self.titlePicture.setObjectName("titlePicture")
         self.logoPicture = QLabel(self.centralwidget)
-        self.logoPicture.setGeometry(QtCore.QRect(925, 0, 200, 140))
+        self.logoPicture.setGeometry(QtCore.QRect(975, 0, 150, 90))
         self.logoPicture.setText("")
         self.logoPicture.setStyleSheet("background-image: url('images/logo.png')")
         self.logoPicture.setObjectName("logoPicture")
@@ -507,11 +507,18 @@ class Worker(QtCore.QObject):
         progressBarLabel.setGeometry(QtCore.QRect(500, 835-103, 300, 25))
         progressBarLabel.setText("Removing duplicates...")
         for key,value in risksWithDuplicates.items():
-            # Removing duplicates
+            # Removing duplicates                      
             newValue = list(dict.fromkeys(risksWithDuplicates[key]))
             newValue = {key: newValue}
-            risksWithDuplicates.update(newValue)
+            risksWithDuplicates.update(newValue)      
 
+        # Get all words from all documents in one list, remove duplicates
+        checkedWordList = []
+        for key,value in risksWithDuplicates.items():
+            for word in value:
+                checkedWordList.append(word)
+        checkedWordList = list(dict.fromkeys(checkedWordList))
+        
         progressBarLabel.setText("Creating new file...")
         base = os.path.basename(fileName)
         name = os.path.splitext(base)[0]
@@ -529,7 +536,7 @@ class Worker(QtCore.QObject):
         df = df.sort_values(by='Risk Count', ascending=False)
         df = df.reset_index(drop=True)
         df['Machine Learning Statistics'] = ''
-        df['Machine Learning Statistics'][0] = 'Total risks identefied in all documents: '+str(totalRiskCount)
+        df['Machine Learning Statistics'][0] = 'Number of unique risks identified in documents: '+str(len(checkedWordList))
         df['Machine Learning Statistics'][1] = 'Average risk per document: '+str("{0:.2f}".format((totalRiskCount/len(df.index))))
         df['Machine Learning Statistics'][2] = 'Percentage of documents that had no labeled risks: '+str("{0:.2f}".format((len(df.index)-docContainsRiskCount)/len(df.index)*100))+"%"
 
